@@ -16,4 +16,4 @@ The project targets .NET 10 and is intended for Visual Studio Community 2026 on 
 - `bridge/` — reserved for separately deployed serial-over-TCP bridge configuration.
 - `config/` — reserved for saved connection and instrument configuration.
 
-See [Sprint 0](docs/sprints/sprint-0.md) for scope and acceptance criteria, and [development setup](docs/development.md) to build and test.
+See the [Sprint 0 summary](docs/sprints/sprint-0/summary.md), [Sprint 0 plan](docs/sprints/sprint-0/plan.md), and [development setup](docs/development.md) to build and test.
