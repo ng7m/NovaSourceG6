@@ -1,6 +1,6 @@
-using NovaSourceG6.SerialProbe;
+using NovaSourceG6Config;
 
-namespace NovaSourceG6.SerialProbe.Tests;
+namespace NovaSourceG6Config.Tests;
 
 public sealed class SerialPortProbeServiceTests
 {

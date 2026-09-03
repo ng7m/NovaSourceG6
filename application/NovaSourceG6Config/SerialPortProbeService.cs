@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace NovaSourceG6.SerialProbe;
+namespace NovaSourceG6Config;
 
 public interface ISerialPortProvider
 {

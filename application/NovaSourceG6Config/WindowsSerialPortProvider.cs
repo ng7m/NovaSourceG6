@@ -1,6 +1,6 @@
 using System.IO.Ports;
 
-namespace NovaSourceG6.SerialProbe;
+namespace NovaSourceG6Config;
 
 public sealed class WindowsSerialPortProvider : ISerialPortProvider
 {

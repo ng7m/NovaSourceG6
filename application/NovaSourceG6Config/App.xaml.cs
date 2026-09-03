@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace NovaSourceG6.SerialProbe;
+namespace NovaSourceG6Config;
 
 /// <summary>
 /// Interaction logic for App.xaml

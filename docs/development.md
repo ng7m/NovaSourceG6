@@ -16,10 +16,10 @@ dotnet test NovaSourceG6.sln
 
 ## Run the prototype
 
-Open `NovaSourceG6.sln` in Visual Studio and start `NovaSourceG6.SerialProbe`, or run:
+Open `NovaSourceG6.sln` in Visual Studio and start `NovaSourceG6Config`, or run:
 
 ```powershell
-dotnet run --project application/NovaSourceG6.SerialProbe
+dotnet run --project application/NovaSourceG6Config
 ```
 
 The prototype does not send data; it only opens and closes the selected port. Do not test a port that is already in use by another application.

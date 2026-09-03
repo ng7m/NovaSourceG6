@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "application", "application", "{A74F262E-BDE7-D5D2-89E9-785413424D0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSourceG6.SerialProbe", "application\NovaSourceG6.SerialProbe\NovaSourceG6.SerialProbe.csproj", "{AF5E1BA3-883E-4266-8F23-3DD29480A6A1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSourceG6Config", "application\NovaSourceG6Config\NovaSourceG6Config.csproj", "{AF5E1BA3-883E-4266-8F23-3DD29480A6A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSourceG6.SerialProbe.Tests", "tests\NovaSourceG6.SerialProbe.Tests\NovaSourceG6.SerialProbe.Tests.csproj", "{74BE1A0B-B27B-4CFF-A69D-1A67619B823B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovaSourceG6Config.Tests", "tests\NovaSourceG6Config.Tests\NovaSourceG6Config.Tests.csproj", "{74BE1A0B-B27B-4CFF-A69D-1A67619B823B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
