@@ -1,0 +1,38 @@
+﻿<Window x:Class="NovaSourceG6.SerialProbe.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NovaSourceG6.SerialProbe"
+        mc:Ignorable="d"
+        Title="NovaSource G6 Serial Probe" Height="300" Width="560" MinHeight="300" MinWidth="560">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock FontSize="22" FontWeight="SemiBold" Text="Serial Port Connection Probe" />
+        <TextBlock Grid.Row="2" TextWrapping="Wrap" Foreground="#444"
+                   Text="This diagnostic opens the selected port and immediately closes it. It does not send any instrument commands or read data." />
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="PortSelector" MinWidth="230" VerticalContentAlignment="Center" />
+            <Button Grid.Column="2" Padding="12,6" Click="RefreshPorts_Click" Content="Refresh" />
+            <Button Grid.Column="4" Padding="12,6" Click="TestPort_Click" Content="Test selected port" />
+        </Grid>
+        <Border Grid.Row="5" Margin="0,20,0,0" Padding="12" Background="#F3F6F8" CornerRadius="4" VerticalAlignment="Top">
+            <TextBlock x:Name="StatusMessage" TextWrapping="Wrap" Text="Select a port and choose Test selected port." />
+        </Border>
+    </Grid>
+</Window>
