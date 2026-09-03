@@ -4,7 +4,7 @@ Windows 11 control software for the NovaSource G6 programmable frequency source.
 
 ## Sprint 0 status
 
-Sprint 0 contains a WPF serial-port diagnostic prototype. It lists the serial ports visible to Windows and performs a non-invasive open/close check on a selected port. It sends no data to the instrument.
+Sprint 0 contains the `NovaSourceG6Config` WPF serial-port diagnostic prototype. It lists the serial ports visible to Windows and performs a non-invasive open/close check on a selected port. It sends no data to the instrument.
 
 The project targets .NET 10 and is intended for Visual Studio Community 2026 on Windows 11.
 

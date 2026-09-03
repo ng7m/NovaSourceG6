@@ -33,6 +33,25 @@ Opening a serial port can still reserve it briefly and may cause device-driver-l
 - The probe does not transmit instrument data.
 - Automated tests pass.
 
+
+## Completed outcome
+
+- Created the `NovaSourceG6Config` WPF project and `NovaSourceG6Config.Tests` test project.
+- Created the `application/`, `tests/`, `docs/`, `bridge/`, and `config/` project structure.
+- Implemented COM-port enumeration, refresh, user selection, and a non-invasive open/close test.
+- Implemented clear failure reporting for a missing selection, a stale port, an unavailable port, and a port that is already in use.
+- Verified Debug and Release builds with .NET SDK 10.0.400; tests passed: 4 passed, 0 failed, 0 skipped.
+
+## Deliverables
+
+- Solution: `NovaSourceG6.sln`
+- Application project: `application/NovaSourceG6Config/NovaSourceG6Config.csproj`
+- Test project: `tests/NovaSourceG6Config.Tests/NovaSourceG6Config.Tests.csproj`
+- Release executable: `application/NovaSourceG6Config/bin/Release/net10.0-windows/NovaSourceG6Config.exe`
+
+## Verification record
+
+Tests use a fake serial-port provider, so they verify port-list handling, connection disposal, and error messages without requiring a physical G6.
 ## Findings and next decision checkpoint
 
 Sprint 1 planning will use the prototype outcome to decide the connection-management model, operator workflow, and how virtual ports are labeled in the application.

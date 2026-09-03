@@ -23,3 +23,7 @@ dotnet run --project application/NovaSourceG6Config
 ```
 
 The prototype does not send data; it only opens and closes the selected port. Do not test a port that is already in use by another application.
+
+## Release output
+
+After a Release build: `application/NovaSourceG6Config/bin/Release/net10.0-windows/NovaSourceG6Config.exe`
