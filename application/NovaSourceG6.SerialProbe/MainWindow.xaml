@@ -16,7 +16,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock FontSize="22" FontWeight="SemiBold" Text="Serial Port Connection Probe" />
+        <TextBlock FontSize="22" FontWeight="SemiBold" Text="Serial Port Connection" />
         <TextBlock Grid.Row="2" TextWrapping="Wrap" Foreground="#444"
                    Text="This diagnostic opens the selected port and immediately closes it. It does not send any instrument commands or read data." />
         <Grid Grid.Row="4">
