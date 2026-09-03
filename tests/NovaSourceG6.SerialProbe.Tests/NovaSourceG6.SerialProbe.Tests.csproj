@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\application\NovaSourceG6.SerialProbe\NovaSourceG6.SerialProbe.csproj" />
+  </ItemGroup>
+
 </Project>
