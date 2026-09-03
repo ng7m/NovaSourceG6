@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NovaSourceG6.SerialProbe"
         mc:Ignorable="d"
-        Title="NovaSource G6 Serial Probe" Height="300" Width="560" MinHeight="300" MinWidth="560">
+        Title="NovaSource G6 Config" Height="300" Width="560" MinHeight="300" MinWidth="560">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
