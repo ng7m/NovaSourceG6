@@ -1,0 +1,12 @@
+<Window x:Class="NovaSourceG6Config.SweepWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Frequency Sweep" Height="500" Width="620" MinHeight="450" MinWidth="560" Closing="Window_Closing" Background="{DynamicResource AppBackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+ <Grid Margin="20"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+   <StackPanel><TextBlock Text="Start frequency (MHz)"/><TextBox x:Name="StartTextBox"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="Stop frequency (MHz)"/><TextBox x:Name="StopTextBox"/></StackPanel><StackPanel Grid.Column="4"><TextBlock Text="Step (MHz)"/><TextBox x:Name="StepTextBox" Text="0.001"/></StackPanel>
+  </Grid>
+  <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+   <StackPanel><TextBlock Text="Dwell (milliseconds)"/><TextBox x:Name="DwellTextBox" Text="250"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="Direction"/><ComboBox x:Name="DirectionSelector" SelectedIndex="0"><ComboBoxItem Content="Up"/><ComboBoxItem Content="Down"/></ComboBox></StackPanel><StackPanel Grid.Column="4"><TextBlock Text="Repeat count (0 = continuous)"/><TextBox x:Name="RepeatTextBox" Text="1"/></StackPanel>
+  </Grid>
+  <StackPanel Grid.Row="4"><TextBlock x:Name="EstimateText" Foreground="{DynamicResource SecondaryTextBrush}"/><ProgressBar x:Name="SweepProgress" Height="22" Minimum="0" Maximum="100" Margin="0,12,0,6"/><TextBlock x:Name="SweepStatus" Text="Ready." TextWrapping="Wrap"/></StackPanel>
+  <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="StartButton" Padding="14,7" Click="Start_Click" Content="Start"/><Button x:Name="PauseButton" Padding="14,7" Margin="8,0,0,0" Click="Pause_Click" Content="Pause" IsEnabled="False"/><Button x:Name="StopButton" Padding="14,7" Margin="8,0,0,0" Click="Stop_Click" Content="Stop" IsEnabled="False"/></StackPanel>
+ </Grid>
+</Window>

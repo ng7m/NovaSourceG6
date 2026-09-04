@@ -1,0 +1,27 @@
+<Window x:Class="NovaSourceG6Config.TriggerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trigger Settings" Width="540" Height="450" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/><RowDefinition Height="18"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="145"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center" Text="Trigger source"/>
+            <ComboBox x:Name="SourceSelector" Grid.Column="1" SelectionChanged="Control_Changed"><ComboBoxItem Content="Internal" Tag="M"/><ComboBoxItem Content="External (TRIG/MOD input)" Tag="T"/></ComboBox>
+        </Grid>
+        <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="145"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center" Text="Trigger mode"/>
+            <ComboBox x:Name="ModeSelector" Grid.Column="1" SelectionChanged="Control_Changed"><ComboBoxItem Content="Continuous" Tag="C"/><ComboBoxItem Content="Momentary" Tag="M"/><ComboBoxItem Content="Toggle" Tag="T"/></ComboBox>
+        </Grid>
+        <CheckBox x:Name="InternalTriggerCheckBox" Grid.Row="4" Checked="Control_Changed" Unchecked="Control_Changed" Content="Internal trigger enabled"/>
+        <CheckBox x:Name="RfStandbyCheckBox" Grid.Row="6" Checked="Control_Changed" Unchecked="Control_Changed" Content="RF standby (faster switching; increased off-state leakage)"/>
+        <Border Grid.Row="8" Padding="12" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+            <TextBlock TextWrapping="Wrap" Text="The rear TRIG/MOD connector is shared. Selecting External trigger requires that input and cannot be used at the same time as External modulation."/>
+        </Border>
+        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="90" IsCancel="True" Content="Cancel"/>
+            <Button x:Name="ApplyButton" Width="90" Margin="8,0,0,0" Click="Apply_Click" Content="Apply" IsEnabled="False"/>
+        </StackPanel>
+    </Grid>
+</Window>

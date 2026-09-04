@@ -16,6 +16,10 @@ public sealed class WindowsSerialPortProvider : ISerialPortProvider
         {
             serialPort = new SerialPort(portName)
             {
+                BaudRate = 38400,
+                DataBits = 8,
+                Parity = Parity.None,
+                StopBits = StopBits.One,
                 DtrEnable = false,
                 RtsEnable = false,
                 Handshake = Handshake.None,
@@ -25,7 +29,9 @@ public sealed class WindowsSerialPortProvider : ISerialPortProvider
         }
 
         public void Open() => serialPort.Open();
-
+        public void DiscardInBuffer() => serialPort.DiscardInBuffer();
+        public void Write(string value) => serialPort.Write(value);
+        public string ReadExisting() => serialPort.ReadExisting();
         public void Dispose() => serialPort.Dispose();
     }
 }

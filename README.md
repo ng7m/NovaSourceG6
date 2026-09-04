@@ -1,4 +1,4 @@
-# NovaSource G6 Control
+# NovaSource G6 Config
 
 Windows 11 control software for the NovaSource G6 programmable frequency source.
 
