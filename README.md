@@ -2,9 +2,9 @@
 
 Windows 11 control software for the NovaSource G6 programmable frequency source.
 
-## Sprint 0 status
+## Application status
 
-Sprint 0 contains the `NovaSourceG6Config` WPF serial-port diagnostic prototype. It lists the serial ports visible to Windows and performs a non-invasive open/close check on a selected port. It sends no data to the instrument.
+`NovaSourceG6Config` is a WPF configuration utility for the NovaSource G6. It connects to one operator-selected serial port using the device's fixed 38400 baud, 8-data-bit, no-parity, 1-stop-bit configuration. The application reads the current device state and provides controls for frequency, attenuation, modulation, triggering, frequency sweeps, and loading or storing device settings.
 
 The project targets .NET 10 and is intended for Visual Studio Community 2026 on Windows 11.
 
@@ -16,4 +16,4 @@ The project targets .NET 10 and is intended for Visual Studio Community 2026 on 
 - `bridge/` — reserved for separately deployed serial-over-TCP bridge configuration.
 - `config/` — reserved for saved connection and instrument configuration.
 
-See the [Sprint 0 summary](docs/sprints/sprint-0/summary.md), [Sprint 0 plan](docs/sprints/sprint-0/plan.md), and [development setup](docs/development.md) to build and test.
+See the [development setup](docs/development.md) to build and test. Historical planning records are available under `docs/sprints/`.
