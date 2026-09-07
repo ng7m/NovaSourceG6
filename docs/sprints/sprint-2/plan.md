@@ -1,5 +1,7 @@
 # Sprint 2 — Operational Reliability and Device Validation
 
+**Status: Closed September 7, 2026.** Version 0.2.0 is the application's first release. Packaging and deployment were delivered as expanded sprint scope. See [closure summary](summary.md). Further changes await initial user feedback; the plan below is retained as the historical scope record.
+
 ## Planning status
 
 Scope updated September 4, 2026. The user confirmed operational reliability and real-device validation as the priority and added the About box, manual startup connection, layout correction, and window-placement persistence described below. Implementation was authorized, and GPL-3.0-or-later was selected. The user explicitly deferred real-device acceptance to a later sprint. See summary.md and acceptance.md for evidence and remaining verification.

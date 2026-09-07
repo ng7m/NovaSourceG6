@@ -1,6 +1,18 @@
 # Sprint 2 Acceptance Record
 
-Date: September 4, 2026. Software validation uses fakes and rendered WPF content. No physical G6 commands or bridge changes have been performed during this sprint implementation.
+## Closure — September 7, 2026
+
+Sprint 2 is closed at the project owner's direction with 0.2.0 designated as the
+first application release. Final Release build: zero warnings/errors; 59 tests
+passed. The suite also passed independently on .NET 8 and 9 earlier in the sprint.
+Installer compilation, self-signed signature metadata, archive contents, and
+public-download checksum verification passed. Formal hardware and clean-machine
+installer acceptance remain deferred. The historical checklist below does not
+claim those deferred scenarios passed. Further work awaits user feedback.
+
+## Earlier acceptance baseline
+
+Date: September 4, 2026. Software validation uses fakes and rendered WPF content. Later user-reported hardware observations informed fixes, but do not constitute completion of the formal device checklist below.
 
 ## Software evidence
 

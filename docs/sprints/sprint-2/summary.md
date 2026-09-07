@@ -1,6 +1,11 @@
-# Sprint 2 Implementation Status
+# Sprint 2 — Closed
 
-September 4, 2026. Software scope delivered and verified with automated checks. The user explicitly deferred real-device acceptance to a later sprint. Live multi-monitor/virtual-desktop validation remains an operator verification item.
+Closed September 7, 2026, at the project owner's direction. **Version 0.2.0 is the first release of NovaSource G6 Config.** Packaging and web deployment are complete. Development is waiting for user feedback on this initial release; no new sprint or additional implementation work is started.
+
+Download page: http://www.ng7m.com/downloads/NG7M/NovaSourceG6/
+Project source: https://github.com/ng7m/NovaSourceG6
+
+The first release retains its self-signed test certificate and documented validation limitations. Closing the sprint does not represent completion of formal hardware or clean-machine installer acceptance.
 
 ## Delivered
 
@@ -11,15 +16,24 @@ September 4, 2026. Software scope delivered and verified with automated checks. 
 - Serial timeouts, transport errors, and canceled in-flight commands discard the connection. Failed operations clear confirmed UI state and request explicit reconnect; failed writes are not replayed.
 - Sweeps use a testable runner; pause/stop/close prevent further work after cancellation, and dialog completion obtains fresh state or marks it unverified. Trigger/modulation failures close the dialog and invalidate the main state; dialogs cannot close halfway through applying changes. Main-window close waits for active work before disposing the connection.
 - Current development, bridge verification, and architecture links replace obsolete prototype operating instructions.
+- RF output and PLL lock polling, animated RF status, buffered serial responses, bounded connection retries, and targeted readbacks after dialog changes.
+- Friendlier errors, separate technical details, hardware overview, license text reflow, and compact dialog footers.
+- .NET 8 minimum target with major runtime roll-forward; the build SDK remains .NET 10.
+- Self-signed per-user Windows x64 installer, installation-free ZIP, matching source archive, release notes, and SHA-256 checksums.
+- Versioned release deployment with checksum verification and a published download page linking to the installer, ZIP, GitHub project, notes, and checksums. Generated outputs and private signing material are excluded from Git.
 
 ## Verification
 
-Direct Debug and Release project builds and tests use repository-local .NET SDK 10.0.400. Automated suite: 54 tests, including startup/layout, monitor placement policy, transport failure/cancellation, and sweep behavior. See the command sequence in [development instructions](../../development.md).
+The final release packaging run passed the Release application build with no warnings or errors and all 59 automated tests on .NET 10. Earlier independent runs of the 59-test suite passed on .NET 8.0.30 and .NET 9.0.19. Direct project commands use repository-local SDK 10.0.400. See [development instructions](../../development.md).
+
+The 0.2.0 installer compiled successfully. Test-signature metadata and package contents were checked. All five public release files were downloaded from the deployed HTTP site and matched local checksums. Installation on a clean machine and formal device acceptance were not performed by the agent.
 
 WPF main/About content was rendered at 100%, 150%, and 200%; the About box also has dark-color renders. Default main content and About wrapping were visually reviewed. Optional local render artifacts are in `tmp/sprint-2-ui`; the test's `NSG6_UI_ARTIFACT_DIR` setting regenerates them. Rendering does not validate native window restoration or live monitor scaling changes.
 
 The previously recorded solution-level workload-resolver issue is not claimed fixed; direct project builds remain the verification path.
 
-## Remaining acceptance
+## Follow-up after user feedback
 
-See [acceptance record](acceptance.md). Real-device acceptance is deferred to a later sprint by user request. Frequency and sweep limits continue to come from the device LF/HF queries; other parameter limits follow the protocol. Live monitor removal, DPI changes, minimized/maximized relaunch, Windows 11 virtual desktops, and interactive license-viewer behavior remain to be exercised. No device state was changed by this implementation run.
+See [acceptance record](acceptance.md). Formal real-device acceptance remains deferred by agreement. Remaining desktop and installer scenarios are follow-up items, not blockers reopening Sprint 2. User feedback will determine the next sprint's scope; trusted signing can be considered later. No automatic monitoring, feature development, or new release is scheduled.
+
+The existing 0.2.0 download artifacts and their matching checksums remain unchanged. Their embedded release notes use the original “test release” wording. The project designates that same version as its first release. The NG7M update-link change is in source for the next build; the published 0.2.0 binary still opens GitHub Releases.

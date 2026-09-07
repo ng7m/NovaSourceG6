@@ -4,6 +4,11 @@ Windows 11 control software for the NovaSource G6 programmable frequency source.
 
 ## Application status
 
+**First release: 0.2.0. Sprint 2 closed September 7, 2026.** The application is
+available for initial user feedback. Additional changes and the next sprint's
+scope are on hold until that feedback is received. See the
+[Sprint 2 closure summary](docs/sprints/sprint-2/summary.md).
+
 `NovaSourceG6Config` is a WPF configuration utility for the NovaSource G6. It connects to one operator-selected serial port using the device's fixed 38400 baud, 8-data-bit, no-parity, 1-stop-bit configuration. The application reads the current device state and provides controls for frequency, attenuation, modulation, triggering, frequency sweeps, and loading or storing device settings.
 
 The project targets .NET 8 with major-version roll-forward and is intended for Visual Studio Community 2026 on Windows 11. It can use an installed .NET 8, 9 or 10 Desktop Runtime; the build SDK remains pinned separately in `global.json`.
