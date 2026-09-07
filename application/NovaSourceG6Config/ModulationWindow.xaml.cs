@@ -12,10 +12,13 @@ public partial class ModulationWindow : Window
     private bool isApplying;
 
     public G6DeviceState? UpdatedState { get; private set; }
+    public bool StateUncertain { get; private set; }
 
     public ModulationWindow(G6DeviceService deviceService, G6DeviceState originalState)
     {
         InitializeComponent();
+        DialogPlacement.Configure(this);
+        Closing += (_, e) => { if (isApplying && UpdatedState is null && !StateUncertain) e.Cancel = true; };
         this.deviceService = deviceService;
         this.originalState = originalState;
         SourceSelector.SelectedItem = SourceSelector.Items.Cast<ComboBoxItem>()
@@ -64,8 +67,10 @@ public partial class ModulationWindow : Window
         }
         catch (Exception exception)
         {
+            StateUncertain = true;
             MessageBox.Show(this, $"The modulation settings could not be applied: {exception.Message}",
                 "Modulation error", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogResult = false;
         }
         finally
         {

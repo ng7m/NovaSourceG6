@@ -18,8 +18,8 @@ public partial class MainWindow : Window
     private const uint MenuSeparator = 0x0800;
     private const uint MenuString = 0x0000;
     private const uint MenuChecked = 0x0008;
-    private readonly SerialPortProbeService portProbeService = new(new WindowsSerialPortProvider());
-    private readonly ConnectionProfileService connectionProfileService = new(new JsonConnectionProfileStore());
+    private readonly SerialPortProbeService portProbeService;
+    private readonly ConnectionProfileService connectionProfileService;
     private readonly G6DeviceService deviceService;
     private readonly ThemeService themeService = new();
     private readonly string? rememberedPortName;
@@ -31,9 +31,63 @@ public partial class MainWindow : Window
     private G6DeviceState? confirmedState;
     private HwndSource? windowSource;
     private IntPtr systemMenuHandle;
+    private WindowPlacementService? placementService;
+    private bool closeAfterOperation;
+    private CancellationTokenSource? statusPollingCancellation;
+    private Task? statusPollingTask;
+    private bool isClosing;
+    private bool closeReady;
 
-    public MainWindow()
+    private void StartStatusPolling()
     {
+        if (statusPollingTask is { IsCompleted: false } || isClosing) return;
+        statusPollingCancellation?.Dispose();
+        statusPollingCancellation = new();
+        statusPollingTask = PollStatusAsync(statusPollingCancellation.Token);
+    }
+
+    private async Task StopStatusPollingAsync()
+    {
+        statusPollingCancellation?.Cancel();
+        if (statusPollingTask is not null) await statusPollingTask;
+        statusPollingTask = null;
+        statusPollingCancellation?.Dispose();
+        statusPollingCancellation = null;
+    }
+
+    private async Task PollStatusAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                if (isBusy || confirmedState is null) continue;
+                if (!portProbeService.IsConnected) return;
+                // Finish an in-flight reply before stopping, so the serial stream stays aligned.
+                var status = await deviceService.TryReadStatusAsync();
+                if (cancellationToken.IsCancellationRequested) return;
+                if (status is null) continue;
+                RfIndicator.IsRfOn = status.RfOn;
+                LockIndicator.Fill = StatusBrush(status.Locked);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            portProbeService.Disconnect();
+            SetDisconnectedVisualState();
+            UpdateConnectionControls();
+            StatusMessage.Text = $"G6 status is unknown: {exception.Message} Click Connect to reconnect and read the device. Power loss and communication loss cannot be distinguished.";
+        }
+    }
+
+    public MainWindow() : this(new WindowsSerialPortProvider(), new JsonConnectionProfileStore()) { }
+
+    public MainWindow(ISerialPortProvider provider, IConnectionProfileStore profileStore)
+    {
+        portProbeService = new(provider);
+        connectionProfileService = new(profileStore);
         themeService.LoadAndApply();
         InitializeComponent();
         deviceService = new(portProbeService);
@@ -45,25 +99,27 @@ public partial class MainWindow : Window
 
     private void RefreshPorts_Click(object sender, RoutedEventArgs e) => RefreshPorts();
 
-    private async void PortSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private string? connectionDetails;
+
+    private void ConnectionDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(connectionDetails))
+            new TechnicalDetailsWindow(connectionDetails) { Owner = this }.ShowDialog();
+    }
+
+    private void SetConnectionDetails(string? details = null)
+    {
+        connectionDetails = details;
+        ConnectionDetails.Visibility = string.IsNullOrWhiteSpace(details) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void PortSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (isRefreshingPorts || PortSelector.SelectedItem is not string) return;
+        SetConnectionDetails();
         PortSelector.IsDropDownOpen = false;
-        await ConnectAsync();
-    }
-
-    private async void PortSelector_DropDownClosed(object? sender, EventArgs e)
-    {
-        // SelectionChanged is not raised when an operator reselects the same port.
-        if (!isRefreshingPorts && !isBusy && !portProbeService.IsConnected && PortSelector.SelectedItem is string)
-        {
-            await ConnectAsync();
-        }
-    }
-
-    private async void Window_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (rememberedPortName is not null && string.Equals(PortSelector.SelectedItem as string, rememberedPortName, StringComparison.OrdinalIgnoreCase)) await ConnectAsync();
+        StatusMessage.Text = $"{PortSelector.SelectedItem} selected. Click Connect to read the G6.";
+        UpdateConnectionControls();
     }
 
     private async Task ConnectAsync()
@@ -75,18 +131,30 @@ public partial class MainWindow : Window
             await RunBusyAsync($"Testing {portName} for a NovaSource G6 connection...", async () =>
             {
                 var result = await portProbeService.ProbeAsync(portName);
-                if (!result.Succeeded) { SetDisconnectedVisualState(); StatusMessage.Text = result.Message; return; }
-                var saved = connectionProfileService.Save(string.Empty, portName, "38400");
-                StatusMessage.Text = saved.Succeeded ? result.Message : $"{result.Message} The port could not be remembered: {saved.Message}";
+                if (!result.Succeeded)
+                {
+                    SetDisconnectedVisualState();
+                    StatusMessage.Text = result.UserMessage ?? $"Couldn’t connect to the G6 on {portName}. Check the device’s power, serial cable, and selected COM port, then click Connect to try again.";
+                    var details = result.Message;
+                    if (!string.IsNullOrEmpty(result.RawResponse))
+                        details += $"\n\nRaw response:\n{result.RawResponse}";
+                    SetConnectionDetails(details);
+                    return;
+                }
                 try
                 {
+                    isConnecting = false;
+                    UpdateConnectionControls();
                     await ReadDeviceStateAsync();
+                    var saved = connectionProfileService.Save(string.Empty, portName, "38400");
+                    if (!saved.Succeeded) StatusMessage.Text += $" The port could not be remembered: {saved.Message}";
                 }
-                catch
+                catch (Exception exception)
                 {
                     portProbeService.Disconnect();
                     SetDisconnectedVisualState();
-                    throw;
+                    StatusMessage.Text = $"The G6 responded on {portName}, but its configuration couldn’t be loaded. Check the device’s power and serial connection, then click Connect to try again.";
+                    SetConnectionDetails(exception.Message);
                 }
             });
         }
@@ -100,10 +168,12 @@ public partial class MainWindow : Window
     private async Task ReadDeviceStateAsync()
     {
         StatusMessage.Text = "Reading the current G6 configuration...";
+        await Dispatcher.Yield(DispatcherPriority.Render);
         var state = await deviceService.ReadStateAsync();
         confirmedState = state;
         PopulateControls(state);
         StatusMessage.Text = $"Configuration loaded from G6 connected to {portProbeService.ActivePortName}";
+        StartStatusPolling();
     }
 
     private void PopulateControls(G6DeviceState state)
@@ -112,9 +182,9 @@ public partial class MainWindow : Window
         try
         {
             FrequencyTextBox.Text = state.FrequencyMhz.ToString("0.000", CultureInfo.InvariantCulture);
-            FrequencyRangeText.Text = $"{state.MinimumFrequencyMhz:0.000}–{state.MaximumFrequencyMhz:0.000} MHz";
+            FrequencyRangeText.Text = $"{state.MinimumFrequencyMhz:0.000} - {state.MaximumFrequencyMhz:0.000} MHz";
             AttenuationSelector.SelectedIndex = state.Attenuation;
-            RfIndicator.Fill = StatusBrush(state.RfOn); LockIndicator.Fill = StatusBrush(state.Locked); PowerIndicator.Fill = StatusBrush(state.PowerOn);
+            RfIndicator.IsRfOn = state.RfOn; LockIndicator.Fill = StatusBrush(state.Locked);
         }
         finally { isPopulating = false; }
         UpdateActionButtons();
@@ -131,7 +201,7 @@ public partial class MainWindow : Window
             var applied = await deviceService.ApplyChangesAsync(originalState, state!);
             confirmedState = state;
             hasUnstoredChanges |= applied > 0;
-            PopulateControls(state!);
+            await ReadDeviceStateAsync();
             StatusMessage.Text = applied == 1
                 ? "The changed setting was accepted by the G6"
                 : $"{applied} changed settings were accepted by the G6";
@@ -156,49 +226,70 @@ public partial class MainWindow : Window
         });
     }
 
-    private void OpenSweep_Click(object sender, RoutedEventArgs e)
+    private async void OpenSweep_Click(object sender, RoutedEventArgs e)
     {
         if (confirmedState is null) return;
         var dialog = new SweepWindow(deviceService, confirmedState.MinimumFrequencyMhz, confirmedState.MaximumFrequencyMhz, confirmedState.FrequencyMhz) { Owner = this };
         dialog.ShowDialog();
-        if (dialog.AppliedFrequencyMhz is decimal frequency)
-        {
-            confirmedState = confirmedState with { FrequencyMhz = frequency };
-            hasUnstoredChanges = true;
-            PopulateControls(confirmedState);
-            StatusMessage.Text = $"The sweep changed the G6 frequency to {frequency:0.000} MHz";
-        }
+        await RefreshAfterDialogAsync(dialog.StateUncertain, dialog.AppliedFrequencyMhz is not null, frequencyOnly: true);
     }
 
-    private void OpenModulation_Click(object sender, RoutedEventArgs e)
+    private async void OpenModulation_Click(object sender, RoutedEventArgs e)
     {
         if (confirmedState is null) return;
         var dialog = new ModulationWindow(deviceService, confirmedState) { Owner = this };
-        if (dialog.ShowDialog() == true && dialog.UpdatedState is not null)
-        {
-            confirmedState = dialog.UpdatedState;
-            hasUnstoredChanges = true;
-            PopulateControls(dialog.UpdatedState);
-            StatusMessage.Text = "The modulation settings were accepted by the G6";
-        }
+        var changed = dialog.ShowDialog() == true && dialog.UpdatedState is not null;
+        await RefreshAfterDialogAsync(dialog.StateUncertain, changed);
     }
 
-    private void OpenTrigger_Click(object sender, RoutedEventArgs e)
+    private async void OpenTrigger_Click(object sender, RoutedEventArgs e)
     {
         if (confirmedState is null) return;
         var dialog = new TriggerWindow(deviceService, confirmedState) { Owner = this };
-        if (dialog.ShowDialog() == true && dialog.UpdatedState is not null)
-        {
-            confirmedState = dialog.UpdatedState;
-            hasUnstoredChanges = true;
-            PopulateControls(dialog.UpdatedState);
-            StatusMessage.Text = "The trigger settings were accepted by the G6";
-        }
+        var changed = dialog.ShowDialog() == true && dialog.UpdatedState is not null;
+        await RefreshAfterDialogAsync(dialog.StateUncertain, changed);
     }
+
+    private async Task RefreshAfterDialogAsync(bool uncertain, bool changed, bool frequencyOnly = false)
+    {
+        if (uncertain || !portProbeService.IsConnected)
+        {
+            await StopStatusPollingAsync();
+            portProbeService.Disconnect();
+            SetDisconnectedVisualState();
+            UpdateConnectionControls();
+            StatusMessage.Text = "Device state is unverified. Some changes may have reached the G6. Click Connect to read its current state.";
+            return;
+        }
+        if (!changed || confirmedState is null) return;
+        hasUnstoredChanges = true;
+        await RunBusyAsync(frequencyOnly ? "Reading the final frequency..." : "Verifying modulation and trigger settings...", async () =>
+        {
+            confirmedState = frequencyOnly
+                ? await deviceService.ReadFrequencyAsync(confirmedState!)
+                : await deviceService.ReadInputSettingsAsync(confirmedState!);
+            if (frequencyOnly)
+            {
+                isPopulating = true;
+                try { FrequencyTextBox.Text = confirmedState.FrequencyMhz.ToString("0.000", CultureInfo.InvariantCulture); }
+                finally { isPopulating = false; }
+            }
+            UpdateActionButtons();
+            StatusMessage.Text = frequencyOnly
+                ? "The final frequency was read from the G6."
+                : "The modulation and trigger settings were read back from the G6.";
+        });
+    }
+
+    private void ShowAbout() => new AboutWindow { Owner = this }.ShowDialog();
+
+    private void About_Click(object sender, RoutedEventArgs e) => ShowAbout();
 
     private void Window_SourceInitialized(object? sender, EventArgs e)
     {
         var windowHandle = new WindowInteropHelper(this).Handle;
+        placementService = new WindowPlacementService(this, windowHandle);
+        placementService.Restore();
         systemMenuHandle = GetSystemMenu(windowHandle, false);
         if (systemMenuHandle != IntPtr.Zero)
         {
@@ -222,7 +313,7 @@ public partial class MainWindow : Window
             var command = (int)(wParam.ToInt64() & 0xFFF0);
             if (command == AboutSystemCommand)
             {
-                new AboutWindow { Owner = this }.ShowDialog();
+                ShowAbout();
                 handled = true;
             }
             else if (command is SystemThemeCommand or LightThemeCommand or DarkThemeCommand)
@@ -279,15 +370,27 @@ public partial class MainWindow : Window
     private async Task RunBusyAsync(string message, Func<Task> action)
     {
         if (isBusy) return;
+        SetConnectionDetails();
         isBusy = true; StatusMessage.Text = message; UpdateConnectionControls();
         await Dispatcher.Yield(DispatcherPriority.Render);
-        try { await action(); }
+        try
+        {
+            await StopStatusPollingAsync();
+            await action();
+        }
         catch (Exception exception)
         {
-            if (!portProbeService.IsConnected) SetDisconnectedVisualState();
-            StatusMessage.Text = $"Operation failed: {exception.Message}";
+            portProbeService.Disconnect();
+            SetDisconnectedVisualState();
+            StatusMessage.Text = $"Operation failed: {exception.Message} Device state is unverified; click Connect to read it again. Some changes may have reached the G6.";
         }
-        finally { isBusy = false; UpdateConnectionControls(); }
+        finally
+        {
+            isBusy = false;
+            UpdateConnectionControls();
+            if (portProbeService.IsConnected && confirmedState is not null) StartStatusPolling();
+            if (closeAfterOperation) _ = Dispatcher.BeginInvoke(new Action(Close));
+        }
     }
 
     private async void ConnectionButton_Click(object sender, RoutedEventArgs e)
@@ -299,13 +402,33 @@ public partial class MainWindow : Window
         }
 
         var name = portProbeService.ActivePortName;
+        SetConnectionDetails();
+        isBusy = true;
+        UpdateConnectionControls();
+        await StopStatusPollingAsync();
         portProbeService.Disconnect();
         SetDisconnectedVisualState();
+        isBusy = false;
         UpdateConnectionControls();
-        StatusMessage.Text = name is null ? "No serial connection is open." : $"Disconnected from {name}. Select a port or click Connect to reconnect.";
+        StatusMessage.Text = name is null ? "No serial connection is open." : $"Disconnected from {name}. Click Connect to reconnect.";
+        if (closeAfterOperation) Close();
+    }
+    private async void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (closeReady) return;
+        if (isBusy) { e.Cancel = true; closeAfterOperation = true; return; }
+        e.Cancel = true;
+        if (isClosing) return;
+        isClosing = true;
+        IsEnabled = false;
+        placementService?.Save();
+        await StopStatusPollingAsync();
+        closeReady = true;
+        _ = Dispatcher.BeginInvoke(new Action(Close));
     }
     private void Window_Closed(object? sender, EventArgs e)
     {
+        placementService?.Dispose();
         SystemParameters.StaticPropertyChanged -= SystemParameters_Changed;
         windowSource?.RemoveHook(WindowMessageHook);
         portProbeService.Dispose();
@@ -330,23 +453,29 @@ public partial class MainWindow : Window
     }
     private void SetDisconnectedVisualState()
     {
+        statusPollingCancellation?.Cancel();
+        FrequencyRangeText.Text = "N/A";
         confirmedState = null;
         hasUnstoredChanges = false;
         DevicePanel.IsEnabled = false;
         ApplyButton.IsEnabled = false;
         StoreButton.IsEnabled = false;
         ConnectionIndicator.Fill = Brushes.Red;
-        RfIndicator.Fill = Brushes.Red;
-        LockIndicator.Fill = Brushes.Red;
-        PowerIndicator.Fill = Brushes.Red;
+        RfIndicator.IsRfOn = null;
+        LockIndicator.Fill = Brushes.Gray;
         ConnectionStateText.Text = "Disconnected";
     }
     private void RefreshPorts(string? preferred = null)
     {
+        SetConnectionDetails();
         var previous = PortSelector.SelectedItem as string; var ports = portProbeService.GetAvailablePorts(); isRefreshingPorts = true;
-        try { PortSelector.ItemsSource = ports; var selection = previous ?? preferred; PortSelector.SelectedItem = ports.FirstOrDefault(port => string.Equals(port, selection, StringComparison.OrdinalIgnoreCase)); }
+        var selection = previous ?? preferred ?? connectionProfileService.Load()?.PortName;
+        try { PortSelector.ItemsSource = ports; PortSelector.SelectedItem = ports.FirstOrDefault(port => string.Equals(port, selection, StringComparison.OrdinalIgnoreCase)); }
         finally { isRefreshingPorts = false; }
-        StatusMessage.Text = ports.Count == 0 ? "No serial ports were found. Connect the G6 serial interface, then refresh." : $"Found {ports.Count} serial port(s).";
+        StatusMessage.Text = ports.Count == 0 ? "No serial ports were found. Connect the G6 serial interface, then refresh."
+            : PortSelector.SelectedItem is string selected ? $"{selected} selected. Click Connect to read the G6."
+            : selection is not null ? $"Remembered port {selection} is unavailable. Select a port, then click Connect."
+            : "Select a serial port, then click Connect.";
         UpdateConnectionControls();
     }
     private static Brush StatusBrush(bool active) => active ? Brushes.SeaGreen : Brushes.Gray;

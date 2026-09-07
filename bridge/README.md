@@ -7,7 +7,7 @@ This directory documents the separately deployed serial-over-TCP bridge. The C# 
 ```text
 NovaSourceG6Config
   -> client COM50
-  -> com0com pair (COM50 <-> CNCB0)
+  -> com0com pair (COM50 <-> COM51)
   -> hub4com RFC 2217 client
   -> private/VPN TCP connection
   -> hub4com RFC 2217 server on bridge host
@@ -26,11 +26,11 @@ Use `COM50` only if it is free. The physical port and TCP port are deployment va
 ## Safety and security boundary
 
 - Complete bridge loopback and transport tests before attaching the G6.
-- Do not send probe strings, line endings, identification commands, or break signals to the G6 until its programming manual has been reviewed.
+- Use the reviewed G6 protocol reference and the current acceptance checklist for instrument testing.
 - Bind or firewall the listener to a trusted management network or VPN. RFC 2217/Telnet does not provide confidentiality or authentication by itself.
 - Permit only the intended client IP to reach the selected TCP port.
 - Ensure only one client owns the physical serial port.
-- Do not run the existing application's **Test selected port** action while hub4com or another application owns that same local port.
+- The application owns COM50 after Connect; hub4com owns COM51. Do not open another application on either owned endpoint.
 
 ## Source projects
 

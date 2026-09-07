@@ -1,0 +1,34 @@
+<Window x:Class="NovaSourceG6Config.DeviceIntroductionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NovaSource G6 Signal Source Hardware" Icon="Assets/NovaSourceG6Config.ico"
+        Width="720" Height="720" MinWidth="360" MinHeight="280"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource AppBackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+    <DockPanel Margin="24">
+        <Button DockPanel.Dock="Bottom" Style="{StaticResource {x:Type Button}}"
+                Content="Close" IsCancel="True" IsDefault="True" Padding="12,7"
+                MinWidth="90" HorizontalAlignment="Right" Margin="0,16,0,0"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <TextBlock Text="NovaSource G6 Overview" FontSize="24" FontWeight="SemiBold"/>
+                <TextBlock Margin="0,8,0,18" TextWrapping="Wrap" Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="From the NovaSource G6 RF Signal Source User Manual, revision 1.2, pages 4–5. References to supplied software describe the original NovaSource G6 Control Panel."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="Nova Engineering's NovaSource G6 Programmable Synthesized RF Signal Sources are completely self-contained, with internal TCXO reference, and software controlled attenuator."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="With your PC and the supplied NovaSource G6 Control Panel software, you simply enter the desired frequency and select an RF output mode and power level. Your settings can be stored in non-volatile memory, so once configured, NovaSource G6 is “plug and play.” Additionally, the internal reference signal can be brought out of the NovaSource G6 or an external reference signal can be used."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="The modulation feature on the NovaSource G6 allows either an externally or internally generated signal to modulate the RF output signal. Therefore, NovaSource G6 can replace full size signal generators in a wide variety of applications."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="NovaSource G6 can also be continuously controlled via its serial input, perfect for product development, breadboarding, test applications, general lab use, or small run production. Models are available in all popular bands, from 120 MHz to 5.875 GHz, with 1 kHz tuning resolution."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,18" Text="Nova Engineering’s NovaSource G6 RF Signal Source is designed specifically to fill the void for a small, low cost, and easy to use signal generator. NovaSource G6 is an alternative to more expensive and cumbersome signal generators which have features not necessary for many projects. For applications in which speed, flexibility, and accuracy are required, NovaSource G6 is ideal."/>
+                <Image Source="Assets/G6-device.jpg" MaxWidth="592" Stretch="Uniform"
+                       AutomationProperties.Name="NovaSource G6 RF Signal Source device photograph"/>
+                <TextBlock Text="Figure 1: NovaSource G6 RF Signal Source" TextWrapping="Wrap"
+                           HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,8,0,18"/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="NovaSource G6 is a complete solution for many frequency synthesizer applications. Requiring only DC power, NovaSource G6 can be used right out of the box with the unit’s built-in settings. Using the supplied software, NovaSource G6 settings can be changed and controlled from any Windows-based PC."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,14" Text="Each standard NovaSource G6 includes all synthesizer functions, including a buffered RF output and an internal ±1 PPM Temperature Compensated Crystal Oscillator (TCXO) reference. The reference port connector can be used to output the internal TCXO signal or to input an external reference signal, making NovaSource G6 ideal for use in a system application. Internal or external mode is selectable via a front panel mounted switch."/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,18" Text="Finally, either an external on/off trigger or an analog modulation signal can be supplied to NovaSource G6. Three trigger modes are available for controlling the RF output state. An RF standby mode provides quick RF output on/off switching. An analog waveform can be applied, or internal modulation selected, to create various types of FM modulation."/>
+                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="Source text and photograph: L-3 Communications Nova Engineering. Manufacturer material retains its original rights and notices; it is not covered by this application's GPL license."/>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

@@ -22,7 +22,7 @@ public sealed class JsonConnectionProfileStore : IConnectionProfileStore
         {
             return JsonSerializer.Deserialize<ConnectionProfile>(File.ReadAllText(filePath));
         }
-        catch (Exception exception) when (exception is JsonException or IOException)
+        catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {
             return null;
         }

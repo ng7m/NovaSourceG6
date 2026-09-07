@@ -10,15 +10,17 @@ public partial class SweepWindow : Window
     private readonly decimal minimum;
     private readonly decimal maximum;
     private CancellationTokenSource? sweepCancellation;
-    private readonly ManualResetEventSlim pauseGate = new(true);
-    private bool paused;
+    private readonly SweepRunner runner;
     private bool closeWhenSweepStops;
 
     public decimal? AppliedFrequencyMhz { get; private set; }
+    public bool StateUncertain { get; private set; }
 
     public SweepWindow(G6DeviceService device, decimal minimum, decimal maximum, decimal current)
     {
         InitializeComponent(); this.device = device; this.minimum = minimum; this.maximum = maximum;
+        DialogPlacement.Configure(this);
+        runner = new(device.SetFrequencyAsync);
         StartTextBox.Text = current.ToString("0.000", CultureInfo.InvariantCulture); StopTextBox.Text = maximum.ToString("0.000", CultureInfo.InvariantCulture);
         EstimateText.Text = $"Allowed range: {minimum:0.000}–{maximum:0.000} MHz. Dwell: 50–60,000 ms.";
     }
@@ -26,54 +28,46 @@ public partial class SweepWindow : Window
     private async void Start_Click(object sender, RoutedEventArgs e)
     {
         if (!TryReadSettings(out var start, out var stop, out var step, out var dwell, out var repeats, out var error)) { SweepStatus.Text = error; return; }
-        sweepCancellation = new(); paused = false; pauseGate.Set(); SetRunning(true); var token = sweepCancellation.Token;
+        sweepCancellation = new(); runner.Resume(); SetRunning(true); var token = sweepCancellation.Token;
         try
         {
             var ascending = DirectionSelector.SelectedIndex == 0; var low = Math.Min(start, stop); var high = Math.Max(start, stop);
-            var points = (int)Math.Floor((high - low) / step) + 1; var pass = 0;
+            var points = checked((int)Math.Floor((high - low) / step) + 1);
             var secondsPerPass = points * dwell / 1000d;
             EstimateText.Text = repeats == 0
                 ? $"{points:N0} points per pass · {TimeSpan.FromSeconds(secondsPerPass):g} per pass · continuous"
-                : $"{points:N0} points per pass · estimated {TimeSpan.FromSeconds(secondsPerPass * repeats):g}";
-            while (repeats == 0 || pass < repeats)
+                : $"{points:N0} points per pass · {repeats:N0} passes · {secondsPerPass * repeats:N0} seconds plus command time";
+            await runner.RunAsync(low, high, step, dwell, repeats, ascending, (frequency, completed, total, pass) =>
             {
-                pass++;
-                for (var index = 0; index < points; index++)
-                {
-                    token.ThrowIfCancellationRequested(); await Task.Run(() => pauseGate.Wait(token), token);
-                    var frequency = ascending ? low + index * step : high - index * step;
-                    await device.SetFrequencyAsync(frequency, token);
                     AppliedFrequencyMhz = frequency;
-                    SweepProgress.Value = (index + 1d) / points * 100d;
+                    SweepProgress.Value = completed / (double)total * 100d;
                     SweepStatus.Text = $"Pass {pass}{(repeats == 0 ? "" : $" of {repeats}")} · {frequency:0.000} MHz";
-                    await Task.Delay(dwell, token);
-                }
-            }
+            }, token);
             SweepStatus.Text = "Sweep complete.";
         }
-        catch (OperationCanceledException) { SweepStatus.Text = "Sweep stopped."; }
-        catch (Exception exception) { SweepStatus.Text = $"Sweep stopped because a device command failed: {exception.Message}"; }
+        catch (OperationCanceledException) { SweepStatus.Text = "Sweep stopped. Close this window to verify the final frequency."; }
+        catch (Exception exception) { StateUncertain = true; SweepStatus.Text = $"Sweep stopped; device state is unverified: {exception.Message}. Close this window to reconnect."; }
         finally
         {
             sweepCancellation?.Dispose();
             sweepCancellation = null;
-            pauseGate.Set();
+            runner.Resume();
             SetRunning(false);
             if (closeWhenSweepStops) _ = Dispatcher.BeginInvoke(new Action(Close));
         }
     }
 
-    private void Pause_Click(object sender, RoutedEventArgs e) { paused = !paused; if (paused) pauseGate.Reset(); else pauseGate.Set(); PauseButton.Content = paused ? "Resume" : "Pause"; SweepStatus.Text = paused ? "Sweep paused." : "Sweep resumed."; }
-    private void Stop_Click(object sender, RoutedEventArgs e) { pauseGate.Set(); sweepCancellation?.Cancel(); }
+    private void Pause_Click(object sender, RoutedEventArgs e) { if (runner.IsPaused) runner.Resume(); else runner.Pause(); PauseButton.Content = runner.IsPaused ? "Resume" : "Pause"; SweepStatus.Text = runner.IsPaused ? "Pause requested; any in-flight command may finish." : "Sweep resumed."; }
+    private void Stop_Click(object sender, RoutedEventArgs e) { sweepCancellation?.Cancel(); runner.Resume(); }
     private void Window_Closing(object? sender, CancelEventArgs e)
     {
         if (sweepCancellation is null) return;
         e.Cancel = true;
         closeWhenSweepStops = true;
-        pauseGate.Set();
         sweepCancellation.Cancel();
+        runner.Resume();
     }
-    private void SetRunning(bool running) { StartButton.IsEnabled = !running; PauseButton.IsEnabled = running; StopButton.IsEnabled = running; StartTextBox.IsEnabled = !running; StopTextBox.IsEnabled = !running; RepeatTextBox.IsEnabled = !running; }
+    private void SetRunning(bool running) { StartButton.IsEnabled = !running && !StateUncertain; PauseButton.IsEnabled = running; PauseButton.Content = "Pause"; StopButton.IsEnabled = running; StartTextBox.IsEnabled = !running; StopTextBox.IsEnabled = !running; RepeatTextBox.IsEnabled = !running; StepTextBox.IsEnabled = !running; DwellTextBox.IsEnabled = !running; DirectionSelector.IsEnabled = !running; }
 
     private bool TryReadSettings(out decimal start, out decimal stop, out decimal step, out int dwell, out int repeats, out string error)
     {

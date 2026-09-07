@@ -11,10 +11,13 @@ public partial class TriggerWindow : Window
     private bool isApplying;
 
     public G6DeviceState? UpdatedState { get; private set; }
+    public bool StateUncertain { get; private set; }
 
     public TriggerWindow(G6DeviceService deviceService, G6DeviceState originalState)
     {
         InitializeComponent();
+        DialogPlacement.Configure(this);
+        Closing += (_, e) => { if (isApplying && UpdatedState is null && !StateUncertain) e.Cancel = true; };
         this.deviceService = deviceService;
         this.originalState = originalState;
         SelectTag(SourceSelector, originalState.InputMode);
@@ -51,8 +54,10 @@ public partial class TriggerWindow : Window
         }
         catch (Exception exception)
         {
+            StateUncertain = true;
             MessageBox.Show(this, $"The trigger settings could not be applied: {exception.Message}",
                 "Trigger error", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogResult = false;
         }
         finally
         {

@@ -2,16 +2,27 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Authors>Max NG7M</Authors>
+    <Product>NovaSource G6 Config</Product>
+    <Company>Max NG7M</Company>
+    <Description>Configuration utility for the NovaSource G6 RF signal source.</Description>
+    <RepositoryUrl>https://github.com/ng7m/NovaSourceG6</RepositoryUrl>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <ApplicationIcon>Assets\NovaSourceG6Config.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="NovaSourceG6Config.LICENSE" />
     <Resource Include="Assets\NovaSourceG6Config.ico" />
     <Resource Include="Assets\NovaSourceG6Config-256.png" />
+    <Resource Include="Assets\G6-device.jpg" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,3 +3,8 @@ obj/
 .vs/
 .dotnet/
 TestResults/
+artifacts/
+tmp/
+.signing/
+*.pfx
+*.p12

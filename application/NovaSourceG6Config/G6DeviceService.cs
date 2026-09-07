@@ -17,10 +17,43 @@ public sealed record G6DeviceState(
     bool Locked,
     bool PowerOn);
 
+public sealed record G6Status(bool RfOn, bool Locked, bool PowerOn);
+
 public sealed class G6DeviceService(SerialPortProbeService serial)
 {
+    private readonly SemaphoreSlim operationLock = new(1, 1);
+
+    // Polls never queue behind operator work or accumulate during a long operation.
+    public async Task<G6Status?> TryReadStatusAsync()
+    {
+        if (!await operationLock.WaitAsync(0)) return null;
+        try { return await ReadStatusCoreAsync(CancellationToken.None); }
+        finally { operationLock.Release(); }
+    }
+
+    private async Task<G6Status> ReadStatusCoreAsync(CancellationToken cancellationToken)
+    {
+        var value = await QueryAsync("LS", cancellationToken);
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var led) ||
+            led is not (1 or 3 or 5 or 7))
+            throw new InvalidDataException($"The device returned an unknown LED status value: {value}.");
+        return new(led is 5 or 7, led is 3 or 7, true);
+    }
+
+    private async Task<IDisposable> EnterOperationAsync(CancellationToken cancellationToken)
+    {
+        await operationLock.WaitAsync(cancellationToken);
+        return new OperationLease(operationLock);
+    }
+
+    private sealed class OperationLease(SemaphoreSlim gate) : IDisposable
+    {
+        public void Dispose() => gate.Release();
+    }
+
     public async Task<G6DeviceState> ReadStateAsync(CancellationToken cancellationToken = default)
     {
+        using var operation = await EnterOperationAsync(cancellationToken);
         var minimum = await QueryDecimalAsync("LF", cancellationToken);
         var maximum = await QueryDecimalAsync("HF", cancellationToken);
         var frequency = await QueryDecimalAsync("FR", cancellationToken);
@@ -31,16 +64,11 @@ public sealed class G6DeviceService(SerialPortProbeService serial)
         var standby = await QueryAsync("RS", cancellationToken);
         var modulation = await QueryAsync("MS", cancellationToken);
         var gain = await QueryIntAsync("MG", cancellationToken);
-        var led = await QueryIntAsync("LS", cancellationToken);
-
-        if (led is not (1 or 3 or 5 or 7))
-        {
-            throw new InvalidDataException($"The device returned an unknown LED status value: {led}.");
-        }
+        var status = await ReadStatusCoreAsync(cancellationToken);
 
         return new(frequency, minimum, maximum, attenuation, inputMode, triggerMode,
             internalTrigger == "E", standby == "E", modulation, gain,
-            led is 5 or 7, led is 3 or 7, true);
+            status.RfOn, status.Locked, status.PowerOn);
     }
 
     public async Task<int> ApplyChangesAsync(
@@ -48,6 +76,7 @@ public sealed class G6DeviceService(SerialPortProbeService serial)
         G6DeviceState updated,
         CancellationToken cancellationToken = default)
     {
+        using var operation = await EnterOperationAsync(cancellationToken);
         var applied = 0;
         if (original.FrequencyMhz != updated.FrequencyMhz)
         {
@@ -101,11 +130,50 @@ public sealed class G6DeviceService(SerialPortProbeService serial)
         return applied;
     }
 
-    public Task SetFrequencyAsync(decimal frequencyMhz, CancellationToken cancellationToken = default) =>
-        SetAsync($"FR {frequencyMhz.ToString("0.000", CultureInfo.InvariantCulture)}", cancellationToken);
+    public async Task<G6DeviceState> ReadFrequencyAsync(G6DeviceState state, CancellationToken cancellationToken = default)
+    {
+        using var operation = await EnterOperationAsync(cancellationToken);
+        var frequency = await QueryDecimalAsync("FR", cancellationToken);
+        if (frequency < state.MinimumFrequencyMhz || frequency > state.MaximumFrequencyMhz)
+            throw new InvalidDataException("The device returned a frequency outside its supported range.");
+        return state with { FrequencyMhz = frequency };
+    }
 
-    public Task LoadAsync(CancellationToken cancellationToken = default) => SetAsync("LD", cancellationToken);
-    public Task StoreAsync(CancellationToken cancellationToken = default) => SetAsync("ST", cancellationToken);
+    public async Task<G6DeviceState> ReadInputSettingsAsync(G6DeviceState state, CancellationToken cancellationToken = default)
+    {
+        using var operation = await EnterOperationAsync(cancellationToken);
+        // Modulation and triggering share the rear input, so verify both sets together.
+        var input = await QueryAsync("IM", cancellationToken);
+        var trigger = await QueryAsync("TM", cancellationToken);
+        var internalTrigger = await QueryAsync("IT", cancellationToken);
+        var standby = await QueryAsync("RS", cancellationToken);
+        var source = await QueryAsync("MS", cancellationToken);
+        var gain = await QueryIntAsync("MG", cancellationToken);
+        return state with
+        {
+            InputMode = input, TriggerMode = trigger,
+            InternalTriggerEnabled = internalTrigger == "E", RfStandbyEnabled = standby == "E",
+            ModulationSource = source, ModulationGain = gain
+        };
+    }
+
+    public async Task SetFrequencyAsync(decimal frequencyMhz, CancellationToken cancellationToken = default)
+    {
+        using var operation = await EnterOperationAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        // Once sent, consume the complete reply before honoring a sweep stop.
+        // The serial response timeout still bounds this wait.
+        await SetAsync($"FR {frequencyMhz.ToString("0.000", CultureInfo.InvariantCulture)}", CancellationToken.None);
+    }
+
+    public Task LoadAsync(CancellationToken cancellationToken = default) => SetSingleAsync("LD", cancellationToken);
+    public Task StoreAsync(CancellationToken cancellationToken = default) => SetSingleAsync("ST", cancellationToken);
+
+    private async Task SetSingleAsync(string command, CancellationToken cancellationToken)
+    {
+        using var operation = await EnterOperationAsync(cancellationToken);
+        await SetAsync(command, cancellationToken);
+    }
 
     private async Task<string> QueryAsync(string command, CancellationToken cancellationToken)
     {

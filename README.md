@@ -6,7 +6,11 @@ Windows 11 control software for the NovaSource G6 programmable frequency source.
 
 `NovaSourceG6Config` is a WPF configuration utility for the NovaSource G6. It connects to one operator-selected serial port using the device's fixed 38400 baud, 8-data-bit, no-parity, 1-stop-bit configuration. The application reads the current device state and provides controls for frequency, attenuation, modulation, triggering, frequency sweeps, and loading or storing device settings.
 
-The project targets .NET 10 and is intended for Visual Studio Community 2026 on Windows 11.
+The project targets .NET 8 with major-version roll-forward and is intended for Visual Studio Community 2026 on Windows 11. It can use an installed .NET 8, 9 or 10 Desktop Runtime; the build SDK remains pinned separately in `global.json`.
+
+## Downloads and packaging
+
+The release workflow produces a Windows x64 per-user installer and an installation-free ZIP, plus matching source and checksums. Early test packages use a self-signed certificate, which is not automatically trusted by Windows. See [packaging instructions](packaging/README.md). Release uploads are a separate explicit step. **Check for updates…** in the next build opens the [NG7M download page](http://www.ng7m.com/downloads/NG7M/NovaSourceG6/); the already-packaged 0.2.0 build opens GitHub Releases. Browse the [project on GitHub](https://github.com/ng7m/NovaSourceG6) or download the matching source archive alongside each release.
 
 ## Layout
 
@@ -17,3 +21,9 @@ The project targets .NET 10 and is intended for Visual Studio Community 2026 on 
 - `config/` — reserved for saved connection and instrument configuration.
 
 See the [development setup](docs/development.md) to build and test. Historical planning records are available under `docs/sprints/`.
+
+Startup preselects the last successfully connected port and waits for **Connect**. The main window remembers its size and monitor placement. The title-bar system menu includes **About NovaSource G6 Config…**, with creator, version, and the full license.
+
+## License and creator
+
+Created by Max NG7M. This project's original software is licensed under the GNU General Public License, version 3 or (at your option) any later version (GPL-3.0-or-later). See [LICENSE](LICENSE). The software is provided without warranty, as described in that license. Third-party dependencies and the manufacturer application note retain their respective licenses and notices.

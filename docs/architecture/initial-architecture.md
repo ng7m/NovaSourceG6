@@ -1,5 +1,7 @@
 # Initial Architecture
 
+Historical Sprint 0 design. The application now uses persistent, bidirectional G6 communication; see the [Sprint 1 architecture record](../sprints/sprint-1/summary.md) and [current operating instructions](../development.md). The layer descriptions below describe the original prototype only.
+
 ## Boundary: remote serial connectivity
 
 The serial-over-TCP solution is deliberately separate from the operator application. A bridge presents a remote physical port as a local virtual COM port, such as `COM50`. The application uses only the standard Windows serial-port interface.

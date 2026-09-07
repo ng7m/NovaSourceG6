@@ -40,7 +40,7 @@ public sealed class SerialPortProbeServiceTests
         Assert.Equal("\r", provider.Connection.WrittenText);
         Assert.True(provider.Connection.BufferDiscarded);
         Assert.False(provider.Connection.Disposed);
-        Assert.Equal("OK \r> ", result.RawResponse);
+        Assert.Equal("OK \r>", result.RawResponse);
 
         service.Disconnect();
 
@@ -94,7 +94,9 @@ public sealed class SerialPortProbeServiceTests
     {
         var result = await CreateService(new FakePortProvider("COM50")).ProbeAsync("COM50");
         Assert.False(result.Succeeded);
-        Assert.Equal("Timed out waiting for a NovaSource G6 prompt from COM50.", result.Message);
+        Assert.Contains("after 3 attempts", result.Message);
+        Assert.Contains("Attempt 3:", result.RawResponse);
+        Assert.Contains("didn’t respond", result.UserMessage);
     }
 
     [Fact]
@@ -121,7 +123,7 @@ public sealed class SerialPortProbeServiceTests
         var provider = new FakePortProvider("COM50") { OpenException = new UnauthorizedAccessException() };
         var result = await CreateService(provider).ProbeAsync("COM50");
         Assert.False(result.Succeeded);
-        Assert.Equal("COM50 is already in use or access is denied.", result.Message);
+        Assert.StartsWith("COM50 is already in use or access is denied.", result.Message);
     }
 
     [Fact]
@@ -132,14 +134,58 @@ public sealed class SerialPortProbeServiceTests
         var result = await CreateService(provider).ProbeAsync("COM51");
 
         Assert.False(result.Succeeded);
-        Assert.Equal(
+        Assert.StartsWith(
             "Timed out while sending the validation request to COM51.",
             result.Message);
         Assert.True(provider.Connection.Disposed);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("OK 1000.000\r")]
+    public async Task CommandTimeoutDisconnectsAndPreventsSubsequentWrites(string partial)
+    {
+        var provider = new FakePortProvider("COM50");
+        provider.Connection.Responses.Enqueue("OK\r>");
+        using var service = CreateService(provider);
+        Assert.True((await service.ProbeAsync("COM50")).Succeeded);
+        provider.Connection.Responses.Enqueue(partial);
+        Assert.False((await service.ExecuteCommandAsync("FR 1000.000")).Succeeded);
+        Assert.False(service.IsConnected);
+        Assert.True(provider.Connection.Disposed);
+        Assert.False((await service.ExecuteCommandAsync("AT 5")).Succeeded);
+        Assert.Equal("\rFR 1000.000\r", provider.Connection.WrittenText);
+    }
+
+    [Fact]
+    public async Task TransportFailureDisconnects()
+    {
+        var provider = new FakePortProvider("COM50");
+        provider.Connection.Responses.Enqueue("OK\r>");
+        using var service = CreateService(provider);
+        await service.ProbeAsync("COM50");
+        provider.Connection.WriteException = new System.IO.IOException("Cable removed");
+        Assert.False((await service.ExecuteCommandAsync("FR 1000.000")).Succeeded);
+        Assert.False(service.IsConnected);
+    }
+
+    [Fact]
+    public async Task CancellationAfterWriteDiscardsConnectionWithPotentialLateResponse()
+    {
+        var provider = new FakePortProvider("COM50");
+        provider.Connection.Responses.Enqueue("OK\r>");
+        using var service = new SerialPortProbeService(provider, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(1));
+        await service.ProbeAsync("COM50");
+        using var cancellation = new CancellationTokenSource();
+        var task = service.ExecuteCommandAsync("FR 1000.000", cancellation.Token);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+        Assert.False(service.IsConnected);
+        Assert.Equal("\rFR 1000.000\r", provider.Connection.WrittenText);
+    }
+
     private static SerialPortProbeService CreateService(FakePortProvider provider) =>
-        new(provider, TimeSpan.FromMilliseconds(30), TimeSpan.FromMilliseconds(1));
+        new(provider, TimeSpan.FromMilliseconds(150), TimeSpan.FromMilliseconds(1));
 
     private sealed class FakePortProvider(params string[] ports) : ISerialPortProvider
     {
@@ -159,6 +205,7 @@ public sealed class SerialPortProbeServiceTests
     private sealed class FakeConnection : ISerialPortConnection
     {
         public Queue<string> Responses { get; } = new();
+        private readonly Queue<string> pendingReads = new();
         public bool BufferDiscarded { get; private set; }
         public bool Disposed { get; private set; }
         public string WrittenText { get; private set; } = string.Empty;
@@ -175,8 +222,9 @@ public sealed class SerialPortProbeServiceTests
         {
             if (WriteException is not null) throw WriteException;
             WrittenText += value;
+            while (Responses.TryDequeue(out var response)) pendingReads.Enqueue(response);
         }
-        public string ReadExisting() => Responses.TryDequeue(out var response) ? response : string.Empty;
+        public string ReadExisting() => pendingReads.TryDequeue(out var response) ? response : string.Empty;
         public void Dispose() => Disposed = true;
     }
 }
