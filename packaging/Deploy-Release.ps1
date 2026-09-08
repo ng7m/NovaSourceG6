@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string]$ReleaseDirectory,
     [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
     [Parameter(Mandatory)][datetime]$ReleaseDate,
-    [string]$DestinationRoot = '\\nt7g-server\c$\inetpub',
+    [string]$DestinationRoot,
     [switch]$Deploy
 )
 $ErrorActionPreference = 'Stop'
@@ -50,7 +50,7 @@ Confirm-Release $preparedRelease
 Write-Output "Prepared site: $prepared"
 if (-not $Deploy) { Write-Output 'Preview only: no web-server files changed.'; return }
 if (-not $DestinationRoot -or -not (Test-Path -LiteralPath $DestinationRoot -PathType Container)) {
-    throw 'Supply an existing website parent directory using -DestinationRoot.'
+    throw 'Supply the existing NG7M virtual-directory filesystem path using -DestinationRoot.'
 }
 $base = (Resolve-Path -LiteralPath $DestinationRoot).ProviderPath.TrimEnd('\')
 $site = Join-Path $base 'NovaSourceG6'
