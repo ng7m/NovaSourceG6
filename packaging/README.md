@@ -100,9 +100,7 @@ Project link: https://github.com/ng7m/NovaSourceG6
 Hosting directory: `\\nt7g-server\c$\inetpub\NovaSourceG6` (moved September 8,
 2026). The deployment script defaults its parent directory to
 `\\nt7g-server\c$\inetpub`. The previous
-`\\nt7g-server\c$\WebCluster\downloads_virtual\NG7M\NovaSourceG6` folder now contains
-only an index.html redirect to `http://www.ng7m.com/`, sourced from
-`packaging/web/legacy-redirect.html`. Release files are served from the new folder.
+`\\nt7g-server\c$\WebCluster\downloads_virtual\NG7M\NovaSourceG6` folder is retired.
 Physical directory placement does not establish an IIS public URL mapping;
 the existing public URL is retained until the host's mapping is confirmed.
 
