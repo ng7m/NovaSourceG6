@@ -92,11 +92,11 @@ public partial class AboutWindow : Window
     {
         try
         {
-            Process.Start(new ProcessStartInfo("http://www.ng7m.com/downloads/NG7M/NovaSourceG6/") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("http://www.ng7m.com:18080/") { UseShellExecute = true });
         }
         catch (Exception exception) when (exception is Win32Exception or InvalidOperationException)
         {
-            MessageBox.Show(this, "Could not open your browser. Visit http://www.ng7m.com/downloads/NG7M/NovaSourceG6/ to check for updates.",
+            MessageBox.Show(this, "Could not open your browser. Visit http://www.ng7m.com:18080/ to check for updates.",
                 "Check for updates", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }

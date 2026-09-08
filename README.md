@@ -15,7 +15,7 @@ The project targets .NET 8 with major-version roll-forward and is intended for V
 
 ## Downloads and packaging
 
-The release workflow produces a Windows x64 per-user installer and an installation-free ZIP, plus matching source and checksums. Early test packages use a self-signed certificate, which is not automatically trusted by Windows. See [packaging instructions](packaging/README.md). Release uploads are a separate explicit step. **Check for updates…** in the next build opens the [NG7M download page](http://www.ng7m.com/downloads/NG7M/NovaSourceG6/); the already-packaged 0.2.0 build opens GitHub Releases. Browse the [project on GitHub](https://github.com/ng7m/NovaSourceG6) or download the matching source archive alongside each release.
+The release workflow produces a Windows x64 per-user installer and an installation-free ZIP, plus matching source and checksums. Early test packages use a self-signed certificate, which is not automatically trusted by Windows. See [packaging instructions](packaging/README.md). Release uploads are a separate explicit step. **Check for updates…** in the next build opens the [NG7M download page](http://www.ng7m.com:18080/); the already-packaged 0.2.0 build opens GitHub Releases. Browse the [project on GitHub](https://github.com/ng7m/NovaSourceG6) or download the matching source archive alongside each release. The port 18080 site requires the IIS and router cutover described in the packaging instructions.
 
 ## Layout
 

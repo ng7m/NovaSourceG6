@@ -1,5 +1,5 @@
 NovaSource G6 Config - Max NG7M
-Downloads: http://www.ng7m.com/downloads/NG7M/NovaSourceG6/
+Downloads: http://www.ng7m.com:18080/
 Project source: https://github.com/ng7m/NovaSourceG6
 
 Windows 11, 64-bit x64 application. Requires .NET Desktop Runtime 8 or newer.

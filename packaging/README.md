@@ -94,12 +94,10 @@ telemetry, automatic downloads or automatic version comparisons.
 
 ## Download site deployment
 
-Public page: http://www.ng7m.com/downloads/NG7M/NovaSourceG6/
+New public page (after IIS/router activation): http://www.ng7m.com:18080/
 Project link: https://github.com/ng7m/NovaSourceG6
 
-The site uses plain HTTP as requested. The page describes the self-signed test
-certificate and explains that same-site HTTP checksums cannot authenticate an
-untrusted download. No certificates or security settings are installed by the
+The page describes the self-signed test certificate. No certificates or security settings are installed by the
 page. There are no third-party fonts, scripts, analytics, or automatic downloads.
 
 Prepare a local preview without writing to the web server:
@@ -108,7 +106,8 @@ Prepare a local preview without writing to the web server:
 .\packaging\Deploy-Release.ps1 -Version 0.2.0 -ReleaseDate 2026-09-05 -ReleaseDirectory <downloads-folder>
 ```
 
-To publish, add `-Deploy -DestinationRoot <existing-NG7M-folder>` using the actual
+To publish, add `-Deploy` (defaults to `\\nt7g-server\c$\inetpub`) or
+`-Deploy -DestinationRoot <existing-parent-folder>` using the actual
 filesystem directory mapped to the public URL. The script creates NovaSourceG6
 beneath it, verifies checksums, stages the complete release, verifies it again,
 then renames staging to `releases/<version>`. Existing version folders must match
@@ -123,6 +122,29 @@ server must permit these settings in the virtual directory and serve EXE/ZIP fil
 
 Existing 0.2.0 packages and their matching source/checksums remain unchanged.
 The update-button and installer URL changes enter the next built release.
+
+### Port 18080 cutover
+
+The site directory is `C:\inetpub\NovaSourceG6` on nt7g-server (192.168.1.102).
+Run `packaging/Configure-IisWebsite.ps1` in an elevated Windows PowerShell session
+on that server after deployment. Create `C:\ProgramData\NovaSourceG6Deployment`
+first for its result log. The script backs up IIS configuration, checks port
+conflicts, creates the `NovaSource G6 Downloads` website and isolated app pool,
+grants read access, and allows inbound TCP 18080 for local address 192.168.1.102.
+Its HTTP binding is `192.168.1.102:18080:www.ng7m.com`.
+
+Verify the page and release downloads over the LAN using hostname www.ng7m.com
+resolved to 192.168.1.102 (or an HTTP Host header of www.ng7m.com:18080).
+Then forward router **TCP external 18080 to 192.168.1.102 internal 18080**.
+Check http://www.ng7m.com:18080/ from outside the LAN before redirecting users.
+
+Until that verification succeeds, keep the original site active at
+http://www.ng7m.com/downloads/NG7M/NovaSourceG6/.
+Afterward, back up its index.html and replace only that file with
+`packaging/web/legacy-redirect.html` in
+`\\nt7g-server\c$\WebCluster\downloads_virtual\NG7M\NovaSourceG6`.
+Retain its release files so existing direct download links continue working.
+The redirect template is prepared, not automatically deployed by Deploy-Release.ps1.
 
 ## Release acceptance (run only when requested)
 

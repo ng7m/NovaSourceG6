@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string]$ReleaseDirectory,
     [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version,
     [Parameter(Mandatory)][datetime]$ReleaseDate,
-    [string]$DestinationRoot,
+    [string]$DestinationRoot = '\\nt7g-server\c$\inetpub',
     [switch]$Deploy
 )
 $ErrorActionPreference = 'Stop'
@@ -50,7 +50,7 @@ Confirm-Release $preparedRelease
 Write-Output "Prepared site: $prepared"
 if (-not $Deploy) { Write-Output 'Preview only: no web-server files changed.'; return }
 if (-not $DestinationRoot -or -not (Test-Path -LiteralPath $DestinationRoot -PathType Container)) {
-    throw 'Supply the existing NG7M virtual-directory filesystem path using -DestinationRoot.'
+    throw 'Supply an existing website parent directory using -DestinationRoot.'
 }
 $base = (Resolve-Path -LiteralPath $DestinationRoot).ProviderPath.TrimEnd('\')
 $site = Join-Path $base 'NovaSourceG6'
@@ -90,4 +90,4 @@ function Publish-PageFile([string]$Name) {
 Publish-PageFile 'web.config'
 # Switch the landing page last, only after the release and server configuration exist.
 Publish-PageFile 'index.html'
-Write-Output 'Published: http://www.ng7m.com/downloads/NG7M/NovaSourceG6/'
+Write-Output 'Published files for: http://www.ng7m.com:18080/ (IIS binding and router forwarding must be configured separately).'
