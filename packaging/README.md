@@ -97,6 +97,13 @@ telemetry, automatic downloads or automatic version comparisons.
 Public page: http://www.ng7m.com/downloads/NG7M/NovaSourceG6/
 Project link: https://github.com/ng7m/NovaSourceG6
 
+Hosting directory: `\\nt7g-server\c$\inetpub\NovaSourceG6` (moved September 8,
+2026). The deployment script defaults its parent directory to
+`\\nt7g-server\c$\inetpub`. The previous
+`\\nt7g-server\c$\WebCluster\downloads_virtual\NG7M\NovaSourceG6` folder is retired.
+Physical directory placement does not establish an IIS public URL mapping;
+the existing public URL is retained until the host's mapping is confirmed.
+
 The site uses plain HTTP as requested. The page describes the self-signed test
 certificate and explains that same-site HTTP checksums cannot authenticate an
 untrusted download. No certificates or security settings are installed by the
@@ -108,8 +115,8 @@ Prepare a local preview without writing to the web server:
 .\packaging\Deploy-Release.ps1 -Version 0.2.0 -ReleaseDate 2026-09-05 -ReleaseDirectory <downloads-folder>
 ```
 
-To publish, add `-Deploy -DestinationRoot <existing-NG7M-folder>` using the actual
-filesystem directory mapped to the public URL. The script creates NovaSourceG6
+To publish, add `-Deploy`, or override the parent with
+`-DestinationRoot <existing-website-parent>`. The script creates NovaSourceG6
 beneath it, verifies checksums, stages the complete release, verifies it again,
 then renames staging to `releases/<version>`. Existing version folders must match
 exactly and are never overwritten. `index.html` is replaced last, with its prior
