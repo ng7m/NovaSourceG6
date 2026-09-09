@@ -94,7 +94,7 @@ telemetry, automatic downloads or automatic version comparisons.
 
 ## Download site deployment
 
-New public page (after IIS/router activation): http://www.ng7m.com:18080/
+Public page: http://www.ng7m.com:18080/
 Project link: https://github.com/ng7m/NovaSourceG6
 
 The page describes the self-signed test certificate. No certificates or security settings are installed by the
@@ -124,6 +124,12 @@ Existing 0.2.0 packages and their matching source/checksums remain unchanged.
 The update-button and installer URL changes enter the next built release.
 
 ### Port 18080 cutover
+
+Activated on September 8, 2026. IIS and the server firewall were configured,
+and the router forwards TCP 18080 to 192.168.1.102:18080. The public URL returned
+HTTP 200 from the deployment PC and all five downloaded release files matched
+the original hashes. The old landing page now redirects to the new URL; its
+release files remain available. Release 0.2.0 was not rebuilt or modified.
 
 The site directory is `C:\inetpub\NovaSourceG6` on nt7g-server (192.168.1.102).
 Run `packaging/Configure-IisWebsite.ps1` in an elevated Windows PowerShell session
